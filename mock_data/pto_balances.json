@@ -1,0 +1,26 @@
+[
+  {
+    "employee_id": "E1001",
+    "pto_balance_days": 12,
+    "sick_leave_days": 5,
+    "floating_holiday_days": 1
+  },
+  {
+    "employee_id": "E1002",
+    "pto_balance_days": 4,
+    "sick_leave_days": 3,
+    "floating_holiday_days": 0
+  },
+  {
+    "employee_id": "E1003",
+    "pto_balance_days": 2,
+    "sick_leave_days": 1,
+    "floating_holiday_days": 0
+  },
+  {
+    "employee_id": "E1004",
+    "pto_balance_days": 18,
+    "sick_leave_days": 6,
+    "floating_holiday_days": 2
+  }
+]

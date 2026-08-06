@@ -1,0 +1,30 @@
+[
+  {
+    "employee_id": "E1001",
+    "medical_plan": "Gold PPO",
+    "dental_plan": "Standard Dental",
+    "vision_plan": "Vision Plus",
+    "benefits_eligible": true
+  },
+  {
+    "employee_id": "E1002",
+    "medical_plan": "Silver HMO",
+    "dental_plan": "Standard Dental",
+    "vision_plan": "None",
+    "benefits_eligible": true
+  },
+  {
+    "employee_id": "E1003",
+    "medical_plan": "None",
+    "dental_plan": "None",
+    "vision_plan": "None",
+    "benefits_eligible": false
+  },
+  {
+    "employee_id": "E1004",
+    "medical_plan": "Gold PPO",
+    "dental_plan": "Premium Dental",
+    "vision_plan": "Vision Plus",
+    "benefits_eligible": true
+  }
+]

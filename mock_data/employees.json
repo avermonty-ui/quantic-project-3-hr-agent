@@ -1,0 +1,50 @@
+[
+  {
+    "employee_id": "E1001",
+    "name": "Avery Kim",
+    "role": "Software Engineer",
+    "department": "Engineering",
+    "employment_type": "Full-time",
+    "location": "New York, NY",
+    "manager_id": "E2001",
+    "manager_name": "Jordan Lee",
+    "remote_eligible": true,
+    "start_date": "2023-04-10"
+  },
+  {
+    "employee_id": "E1002",
+    "name": "Maya Patel",
+    "role": "Customer Success Specialist",
+    "department": "Customer Success",
+    "employment_type": "Full-time",
+    "location": "Austin, TX",
+    "manager_id": "E2002",
+    "manager_name": "Sam Rivera",
+    "remote_eligible": true,
+    "start_date": "2022-09-19"
+  },
+  {
+    "employee_id": "E1003",
+    "name": "Leo Martinez",
+    "role": "Warehouse Operations Associate",
+    "department": "Operations",
+    "employment_type": "Part-time",
+    "location": "Phoenix, AZ",
+    "manager_id": "E2003",
+    "manager_name": "Priya Shah",
+    "remote_eligible": false,
+    "start_date": "2024-01-08"
+  },
+  {
+    "employee_id": "E1004",
+    "name": "Nina Chen",
+    "role": "HR Coordinator",
+    "department": "Human Resources",
+    "employment_type": "Full-time",
+    "location": "Chicago, IL",
+    "manager_id": "E2004",
+    "manager_name": "Morgan Blake",
+    "remote_eligible": true,
+    "start_date": "2021-06-14"
+  }
+]
