@@ -27,6 +27,22 @@ def find_by_employee_id(filename: str, employee_id: str) -> Optional[Dict]:
     return None
 
 
+def find_employee(identifier: str) -> Optional[Dict]:
+    records = load_json("employees.json")
+    normalized_identifier = identifier.strip().lower()
+
+    for record in records:
+        employee_id = record.get("employee_id", "").lower()
+        employee_name = record.get("name", "").lower()
+
+        if normalized_identifier == employee_id:
+            return record
+
+        if normalized_identifier == employee_name:
+            return record
+
+    return None
+
 @mcp.tool()
 def search_policy_documents_tool(query: str, top_k: int = 5) -> List[Dict]:
     """Search HR policy documents and return relevant policy evidence."""
@@ -34,15 +50,15 @@ def search_policy_documents_tool(query: str, top_k: int = 5) -> List[Dict]:
 
 
 @mcp.tool()
-def lookup_employee_profile(employee_id: str) -> Dict:
-    """Look up a synthetic employee profile by employee ID."""
-    employee = find_by_employee_id("employees.json", employee_id)
+def lookup_employee_profile(identifier: str) -> Dict:
+    """Look up a synthetic employee profile by employee ID or exact employee name."""
+    employee = find_employee(identifier)
 
     if not employee:
         return {
             "found": False,
-            "employee_id": employee_id,
-            "message": "No employee profile found for this employee ID."
+            "identifier": identifier,
+            "message": "No employee profile found for this employee ID or name."
         }
 
     return {

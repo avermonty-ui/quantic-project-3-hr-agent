@@ -16,26 +16,34 @@ def run_agent(message: str, employee_id: Optional[str] = None) -> Dict[str, Any]
     citations: List[Dict[str, Any]] = []
     snippets: List[Dict[str, Any]] = []
 
-    if not employee_id:
-        employee_id = extract_employee_id(message)
+    identifier = employee_id or extract_employee_identifier(message)
 
     employee_profile = None
 
-    if employee_id:
-        employee_result = lookup_employee_profile(employee_id)
+    if identifier:
+        employee_result = lookup_employee_profile(identifier)
         tool_trace.append(
             {
                 "tool": "lookup_employee_profile",
-                "arguments": {"employee_id": employee_id},
+                "arguments": {"identifier": identifier},
                 "output": employee_result,
             }
         )
 
         if employee_result.get("found"):
             employee_profile = employee_result["employee"]
+            employee_id = employee_profile["employee_id"]
 
     if is_pto_request(normalized):
         return handle_pto_request(
+            message=message,
+            employee_id=employee_id,
+            employee_profile=employee_profile,
+            tool_trace=tool_trace,
+        )
+
+    if is_expense_request(normalized):
+        return handle_expense_request(
             message=message,
             employee_id=employee_id,
             employee_profile=employee_profile,
@@ -64,7 +72,7 @@ def run_agent(message: str, employee_id: Optional[str] = None) -> Dict[str, Any]
     )
 
 
-def extract_employee_id(message: str) -> Optional[str]:
+def extract_employee_identifier(message: str) -> Optional[str]:
     words = message.replace(",", " ").replace(".", " ").split()
 
     for word in words:
@@ -72,12 +80,40 @@ def extract_employee_id(message: str) -> Optional[str]:
         if cleaned.startswith("E") and cleaned[1:].isdigit():
             return cleaned
 
+    known_names = [
+        "Avery Kim",
+        "Maya Patel",
+        "Leo Martinez",
+        "Nina Chen",
+    ]
+
+    normalized_message = message.lower()
+
+    for name in known_names:
+        if name.lower() in normalized_message:
+            return name
+
     return None
 
 
 def is_pto_request(message: str) -> bool:
     return any(term in message for term in ["pto", "paid time off", "vacation", "sick leave"])
 
+def is_expense_request(message: str) -> bool:
+    return any(
+        term in message
+        for term in [
+            "expense",
+            "reimburse",
+            "reimbursement",
+            "home office",
+            "chair",
+            "desk",
+            "laptop",
+            "travel expense",
+            "receipt",
+        ]
+    )
 
 def is_remote_work_request(message: str) -> bool:
     return any(term in message for term in ["remote", "work from home", "work remotely", "another state", "international"])
@@ -234,6 +270,66 @@ def handle_remote_work_request(
         "tool_trace": tool_trace,
     }
 
+def handle_expense_request(
+    message: str,
+    employee_id: Optional[str],
+    employee_profile: Optional[Dict[str, Any]],
+    tool_trace: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    policy_query = (
+        "business expense reimbursement home office equipment chair desk furniture "
+        "pre-approval manager HR approval receipts reimbursement denial"
+    )
+
+    policy_results = search_policy_documents_tool(
+        policy_query,
+        top_k=4,
+    )
+
+    tool_trace.append(
+        {
+            "tool": "search_policy_documents_tool",
+            "arguments": {
+                "query": policy_query,
+                "top_k": 4,
+            },
+            "output": summarize_tool_output(policy_results),
+        }
+    )
+
+    citations, snippets = build_sources(policy_results)
+
+    if employee_profile and employee_profile.get("remote_eligible"):
+        answer = (
+            f"Employee {employee_id} is marked as remote eligible in the mock employee profile. "
+            "Under the Business Expense and Reimbursement Policy, remote-eligible employees may request "
+            "reimbursement for basic home office equipment when the equipment is necessary for their role. "
+            "However, a home office chair is treated as furniture, and chairs, desks, and other furniture "
+            "require manager and HR approval before purchase. If the chair was not pre-approved, reimbursement "
+            "may be denied."
+        )
+    elif employee_profile and not employee_profile.get("remote_eligible"):
+        answer = (
+            f"Employee {employee_id} is not marked as remote eligible in the mock employee profile. "
+            "Under the Business Expense and Reimbursement Policy, home office reimbursement is primarily described "
+            "for remote-eligible employees. A home office chair is also treated as furniture, which requires manager "
+            "and HR approval before purchase. This request should not be treated as automatically reimbursable."
+        )
+    else:
+        answer = (
+            "Under the Business Expense and Reimbursement Policy, remote-eligible employees may request reimbursement "
+            "for basic home office equipment when the equipment is necessary for their role. However, a home office chair "
+            "is treated as furniture, and chairs, desks, and other furniture require manager and HR approval before purchase. "
+            "If the chair was not pre-approved, reimbursement may be denied. I need an employee ID or name to check whether "
+            "the employee is marked as remote eligible."
+        )
+
+    return {
+        "answer": answer,
+        "citations": citations,
+        "snippets": snippets,
+        "tool_trace": tool_trace,
+    }
 
 def handle_benefits_request(
     message: str,

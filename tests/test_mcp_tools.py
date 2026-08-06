@@ -29,3 +29,13 @@ def test_search_policy_documents_tool():
     assert len(result) > 0
     assert "title" in result[0]
     assert "snippet" in result[0]
+
+def test_lookup_employee_profile_by_name():
+    result = lookup_employee_profile("Avery Kim")
+    assert result["found"] is True
+    assert result["employee"]["employee_id"] == "E1001"
+
+def test_lookup_employee_profile():
+    result = lookup_employee_profile("E1001")
+    assert result["found"] is True
+    assert result["employee"]["name"] == "Avery Kim"
