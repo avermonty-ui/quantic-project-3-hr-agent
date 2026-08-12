@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build RAG index
+        run: |
+          python rag/ingest.py
+
+      - name: Run tests
+        run: |
+          pytest
+
+      - name: Import app check
+        run: |
+          python -c "from app.main import app; print('FastAPI app import OK')"
+
+      - name: MCP tools import check
+        run: |
+          python -c "from hr_mcp.server import lookup_employee_profile; print(lookup_employee_profile('E1001'))"
