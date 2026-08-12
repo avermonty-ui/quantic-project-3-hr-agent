@@ -1,0 +1,242 @@
+[
+  {
+    "id": "Q001",
+    "category": "simple_policy_qa",
+    "question": "How far in advance should employees submit PTO requests?",
+    "employee_identifier": null,
+    "expected_answer_summary": "Employees should submit PTO requests at least five business days before the planned absence when possible.",
+    "expected_tools": ["search_policy_documents_tool"],
+    "expected_policy_sources": ["Paid Time Off Policy"],
+    "success_criteria": ["Answer mentions five business days", "Answer cites PTO policy"]
+  },
+  {
+    "id": "Q002",
+    "category": "simple_policy_qa",
+    "question": "Do PTO requests for three or more consecutive workdays require approval?",
+    "employee_identifier": null,
+    "expected_answer_summary": "Yes. Requests for three or more consecutive workdays require manager approval.",
+    "expected_tools": ["search_policy_documents_tool"],
+    "expected_policy_sources": ["Paid Time Off Policy"],
+    "success_criteria": ["Answer says manager approval is required", "Answer cites PTO policy"]
+  },
+  {
+    "id": "Q003",
+    "category": "simple_policy_qa",
+    "question": "Can employees use public computers to access company systems while working remotely?",
+    "employee_identifier": null,
+    "expected_answer_summary": "No. Employees may not access company systems from public computers, hotel business centers, shared kiosks, or borrowed devices.",
+    "expected_tools": ["search_policy_documents_tool"],
+    "expected_policy_sources": ["Data Security and Acceptable Use Policy"],
+    "success_criteria": ["Answer says public computers are not allowed", "Answer cites data security policy"]
+  },
+  {
+    "id": "Q004",
+    "category": "simple_policy_qa",
+    "question": "Are traffic fines reimbursable business expenses?",
+    "employee_identifier": null,
+    "expected_answer_summary": "No. Traffic or parking fines are generally not reimbursable.",
+    "expected_tools": ["search_policy_documents_tool"],
+    "expected_policy_sources": ["Business Expense and Reimbursement Policy"],
+    "success_criteria": ["Answer says traffic or parking fines are not reimbursable", "Answer cites expense policy"]
+  },
+  {
+    "id": "Q005",
+    "category": "simple_policy_qa",
+    "question": "Who is generally eligible for company benefits?",
+    "employee_identifier": null,
+    "expected_answer_summary": "Full-time employees are generally eligible for company benefits. Part-time employees, contractors, interns, and temporary workers may not be eligible unless required by law or written agreement.",
+    "expected_tools": ["search_policy_documents_tool"],
+    "expected_policy_sources": ["Employee Benefits Policy"],
+    "success_criteria": ["Answer mentions full-time employees", "Answer distinguishes part-time/contractor eligibility", "Answer cites benefits policy"]
+  },
+  {
+    "id": "Q006",
+    "category": "multi_document_policy_qa",
+    "question": "What should an employee consider before working remotely from another state for several weeks?",
+    "employee_identifier": null,
+    "expected_answer_summary": "Extended remote work requires manager and HR approval. Out-of-state work must be reviewed by HR for payroll, tax, labor law, benefits, security, insurance, and data privacy implications. Remote employees must also follow security requirements.",
+    "expected_tools": ["search_policy_documents_tool"],
+    "expected_policy_sources": ["Remote Work Policy", "Data Security and Acceptable Use Policy"],
+    "success_criteria": ["Answer mentions manager and HR approval", "Answer mentions out-of-state review", "Answer mentions security requirements", "Answer cites relevant policies"]
+  },
+  {
+    "id": "Q007",
+    "category": "multi_document_policy_qa",
+    "question": "If an employee loses a company laptop while working remotely, what should they do?",
+    "employee_identifier": null,
+    "expected_answer_summary": "They should immediately report the lost device to IT and their manager and provide details such as device type, last known location, approximate time of loss, and whether company data may have been exposed.",
+    "expected_tools": ["search_policy_documents_tool"],
+    "expected_policy_sources": ["Data Security and Acceptable Use Policy", "Remote Work Policy"],
+    "success_criteria": ["Answer says report immediately", "Answer mentions IT and manager", "Answer cites data security policy"]
+  },
+  {
+    "id": "Q008",
+    "category": "pto_workflow",
+    "question": "Can Avery Kim take three days of PTO next week?",
+    "employee_identifier": "Avery Kim",
+    "expected_answer_summary": "Avery Kim/E1001 has 12 PTO days available, so a three-day request appears to have sufficient balance. Because it is three or more consecutive workdays, manager approval is required. The request should be submitted at least five business days in advance when possible.",
+    "expected_tools": ["lookup_employee_profile", "check_pto_balance", "search_policy_documents_tool", "draft_hr_email"],
+    "expected_policy_sources": ["Paid Time Off Policy"],
+    "success_criteria": ["Tool trace includes employee lookup", "Tool trace includes PTO balance check", "Answer mentions 12 PTO days", "Answer mentions manager approval", "Answer cites PTO policy"]
+  },
+  {
+    "id": "Q009",
+    "category": "pto_workflow",
+    "question": "Can Maya Patel take five PTO days next week?",
+    "employee_identifier": "Maya Patel",
+    "expected_answer_summary": "Maya Patel/E1002 has 4 PTO days available, so a five-day request exceeds the available PTO balance unless adjusted or handled as unpaid leave with manager and HR approval.",
+    "expected_tools": ["lookup_employee_profile", "check_pto_balance", "search_policy_documents_tool", "draft_hr_email"],
+    "expected_policy_sources": ["Paid Time Off Policy"],
+    "success_criteria": ["Answer mentions E1002 or Maya Patel", "Answer mentions 4 PTO days", "Answer notes requested time exceeds balance", "Answer cites PTO policy"]
+  },
+  {
+    "id": "Q010",
+    "category": "pto_workflow",
+    "question": "Can employee E1003 take three days of PTO next week?",
+    "employee_identifier": "E1003",
+    "expected_answer_summary": "E1003 has 2 PTO days available, so a three-day request exceeds available PTO balance. The request may be denied, shortened, or converted to unpaid leave with manager and HR approval.",
+    "expected_tools": ["lookup_employee_profile", "check_pto_balance", "search_policy_documents_tool", "draft_hr_email"],
+    "expected_policy_sources": ["Paid Time Off Policy"],
+    "success_criteria": ["Answer mentions 2 PTO days", "Answer notes insufficient balance", "Answer cites PTO policy"]
+  },
+  {
+    "id": "Q011",
+    "category": "remote_work_workflow",
+    "question": "Can Maya Patel work remotely from another state for six weeks?",
+    "employee_identifier": "Maya Patel",
+    "expected_answer_summary": "Maya Patel/E1002 is remote eligible, but six weeks is extended remote work and requires manager and HR approval before it begins. Out-of-state remote work also requires HR review for payroll, tax, labor law, benefits, security, insurance, and data privacy implications. A mock HR ticket should be created.",
+    "expected_tools": ["lookup_employee_profile", "search_policy_documents_tool", "create_mock_hr_ticket"],
+    "expected_policy_sources": ["Remote Work Policy"],
+    "success_criteria": ["Answer mentions remote eligibility", "Answer mentions manager and HR approval", "Answer mentions out-of-state HR review", "Tool trace includes mock ticket creation"]
+  },
+  {
+    "id": "Q012",
+    "category": "remote_work_workflow",
+    "question": "Can Leo Martinez work remotely from another state for six weeks?",
+    "employee_identifier": "Leo Martinez",
+    "expected_answer_summary": "Leo Martinez/E1003 is not marked as remote eligible. Extended remote work and out-of-state remote work require HR review and documented approvals, so this should be treated as an exception or escalation.",
+    "expected_tools": ["lookup_employee_profile", "search_policy_documents_tool", "create_mock_hr_ticket"],
+    "expected_policy_sources": ["Remote Work Policy"],
+    "success_criteria": ["Answer mentions not remote eligible", "Answer mentions HR review or exception", "Answer cites remote work policy"]
+  },
+  {
+    "id": "Q013",
+    "category": "expense_workflow",
+    "question": "Can Avery Kim expense a home office chair?",
+    "employee_identifier": "Avery Kim",
+    "expected_answer_summary": "Avery Kim/E1001 is remote eligible, but a home office chair is treated as furniture. Chairs, desks, and other furniture require manager and HR approval before purchase. If not pre-approved, reimbursement may be denied.",
+    "expected_tools": ["lookup_employee_profile", "search_policy_documents_tool"],
+    "expected_policy_sources": ["Business Expense and Reimbursement Policy"],
+    "success_criteria": ["Answer mentions remote eligibility", "Answer says chair/furniture needs manager and HR pre-approval", "Answer cites expense policy"]
+  },
+  {
+    "id": "Q014",
+    "category": "expense_workflow",
+    "question": "Can a remote employee expense a home office chair?",
+    "employee_identifier": null,
+    "expected_answer_summary": "Remote-eligible employees may request reimbursement for basic home office equipment when necessary, but chairs, desks, and furniture require manager and HR approval before purchase. If not pre-approved, reimbursement may be denied.",
+    "expected_tools": ["search_policy_documents_tool"],
+    "expected_policy_sources": ["Business Expense and Reimbursement Policy"],
+    "success_criteria": ["Answer routes to expense policy, not remote work policy", "Answer mentions manager and HR pre-approval", "Answer cites expense policy"]
+  },
+  {
+    "id": "Q015",
+    "category": "expense_workflow",
+    "question": "Can an employee get reimbursed for a laptop they bought without IT approval?",
+    "employee_identifier": null,
+    "expected_answer_summary": "Employees should not purchase laptops or other computing devices for reimbursement unless IT approved the purchase in advance.",
+    "expected_tools": ["search_policy_documents_tool"],
+    "expected_policy_sources": ["Business Expense and Reimbursement Policy"],
+    "success_criteria": ["Answer says IT approval is required before purchase", "Answer cites expense policy"]
+  },
+  {
+    "id": "Q016",
+    "category": "benefits_workflow",
+    "question": "Is Leo Martinez eligible for medical, dental, and vision benefits?",
+    "employee_identifier": "Leo Martinez",
+    "expected_answer_summary": "Leo Martinez/E1003 is not benefits eligible in the mock benefits record. The benefits policy says part-time employees are not automatically eligible for full benefits unless required by law or written agreement.",
+    "expected_tools": ["lookup_employee_profile", "lookup_benefits_status", "search_policy_documents_tool"],
+    "expected_policy_sources": ["Employee Benefits Policy"],
+    "success_criteria": ["Answer mentions E1003 or Leo Martinez", "Answer says not benefits eligible", "Answer cites benefits policy"]
+  },
+  {
+    "id": "Q017",
+    "category": "benefits_workflow",
+    "question": "What benefits plans does Avery Kim have?",
+    "employee_identifier": "Avery Kim",
+    "expected_answer_summary": "Avery Kim/E1001 has Gold PPO medical, Standard Dental, and Vision Plus in the mock benefits record.",
+    "expected_tools": ["lookup_employee_profile", "lookup_benefits_status", "search_policy_documents_tool"],
+    "expected_policy_sources": ["Employee Benefits Policy"],
+    "success_criteria": ["Answer mentions Gold PPO", "Answer mentions Standard Dental", "Answer mentions Vision Plus"]
+  },
+  {
+    "id": "Q018",
+    "category": "ambiguous_request",
+    "question": "Can I take time off soon?",
+    "employee_identifier": null,
+    "expected_answer_summary": "The system should explain general PTO policy but ask for an employee ID or name to check the employee's PTO balance.",
+    "expected_tools": ["search_policy_documents_tool"],
+    "expected_policy_sources": ["Paid Time Off Policy"],
+    "success_criteria": ["Answer asks for employee ID or name", "Answer does not invent PTO balance", "Answer cites PTO policy"]
+  },
+  {
+    "id": "Q019",
+    "category": "ambiguous_request",
+    "question": "Can I work from somewhere else?",
+    "employee_identifier": null,
+    "expected_answer_summary": "The system should explain general remote work requirements and ask for the employee identity and remote location/duration to determine whether manager or HR approval is needed.",
+    "expected_tools": ["search_policy_documents_tool"],
+    "expected_policy_sources": ["Remote Work Policy"],
+    "success_criteria": ["Answer asks for employee identity or more details", "Answer mentions remote work approval requirements", "Answer does not invent employee eligibility"]
+  },
+  {
+    "id": "Q020",
+    "category": "out_of_scope",
+    "question": "What is the best stock to buy this week?",
+    "employee_identifier": null,
+    "expected_answer_summary": "The system should not answer financial advice and should state that the question is outside the HR policy corpus.",
+    "expected_tools": ["search_policy_documents_tool"],
+    "expected_policy_sources": [],
+    "success_criteria": ["Answer refuses or redirects", "Answer does not provide stock advice"]
+  },
+  {
+    "id": "Q021",
+    "category": "out_of_scope",
+    "question": "Can you diagnose my medical symptoms?",
+    "employee_identifier": null,
+    "expected_answer_summary": "The system should not provide medical diagnosis and should redirect to appropriate medical care or HR benefits resources if relevant.",
+    "expected_tools": ["search_policy_documents_tool"],
+    "expected_policy_sources": [],
+    "success_criteria": ["Answer refuses medical diagnosis", "Answer does not invent policy support"]
+  },
+  {
+    "id": "Q022",
+    "category": "safety_escalation",
+    "question": "My manager is asking me to share my password. Is that allowed?",
+    "employee_identifier": null,
+    "expected_answer_summary": "No. Passwords must not be shared with coworkers, managers, family members, or external parties. The employee should report suspected account compromise or security concerns.",
+    "expected_tools": ["search_policy_documents_tool"],
+    "expected_policy_sources": ["Data Security and Acceptable Use Policy"],
+    "success_criteria": ["Answer says password sharing is not allowed", "Answer cites data security policy"]
+  },
+  {
+    "id": "Q023",
+    "category": "safety_escalation",
+    "question": "I clicked a suspicious link in an email. What should I do?",
+    "employee_identifier": null,
+    "expected_answer_summary": "The employee should report suspected phishing or suspicious activity and avoid opening suspicious links or attachments.",
+    "expected_tools": ["search_policy_documents_tool"],
+    "expected_policy_sources": ["Data Security and Acceptable Use Policy"],
+    "success_criteria": ["Answer mentions phishing/suspicious activity reporting", "Answer cites data security policy"]
+  },
+  {
+    "id": "Q024",
+    "category": "agentic_task",
+    "question": "Create a mock HR ticket for Maya Patel's six-week out-of-state remote work request.",
+    "employee_identifier": "Maya Patel",
+    "expected_answer_summary": "The system should look up Maya Patel/E1002, retrieve remote work policy, and create a mock HR ticket for remote work review.",
+    "expected_tools": ["lookup_employee_profile", "search_policy_documents_tool", "create_mock_hr_ticket"],
+    "expected_policy_sources": ["Remote Work Policy"],
+    "success_criteria": ["Tool trace includes employee lookup", "Tool trace includes policy search", "Tool trace includes mock ticket creation"]
+  }
+]
