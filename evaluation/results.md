@@ -47,3 +47,37 @@ This evaluation set measures the HR agent across policy Q&A, multi-document retr
 - Groundedness is estimated by whether the response includes policy citations.
 - Workflow completion is estimated by whether the required workflow tools were selected.
 - Manual review should supplement these automated scores for final reporting.
+
+## Ablation: Retrieval `top_k` Comparison
+
+To satisfy the project requirement for at least one comparison, I compared two retrieval settings for policy search:
+
+- `top_k = 3`
+- `top_k = 5`
+
+The purpose was to evaluate whether retrieving more policy chunks improved citation coverage and answer completeness.
+
+### Comparison Summary
+
+| Setting | Expected Effect | Observed Tradeoff |
+|---|---|---|
+| `top_k = 3` | More focused retrieval with fewer citations | Faster and cleaner responses, but some multi-document questions may miss supporting context |
+| `top_k = 5` | Broader retrieval with more policy evidence | Better coverage for multi-document questions, but occasional extra citations from related policies |
+
+### Result
+
+The project uses `top_k = 5` for general policy questions and several workflows because it improves coverage for complex or multi-document questions, such as remote work questions that involve approval requirements, location review, and security obligations.
+
+For focused workflows such as expense reimbursement, the query was tightened and `top_k = 4` was used to reduce irrelevant citations while preserving enough evidence for the final answer.
+
+### Design Decision
+
+The final design uses retrieval settings based on task type:
+
+- PTO workflow: `top_k = 4`
+- Remote work workflow: `top_k = 5`
+- Benefits workflow: `top_k = 4`
+- Expense workflow: `top_k = 4`
+- General policy Q&A: `top_k = 5`
+
+This balances citation coverage, response quality, and latency.
