@@ -1,49 +1,118 @@
+from pathlib import Path
 from typing import Dict, List
+import re
 
 
-VECTOR_DB_PATH = "rag/vector_store"
-COLLECTION_NAME = "hr_policies"
-EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+POLICY_DIR = Path("policies")
+
+
+def tokenize(text: str) -> set[str]:
+    return set(re.findall(r"[a-zA-Z][a-zA-Z0-9_-]*", text.lower()))
+
+
+def extract_title(text: str, fallback: str) -> str:
+    for line in text.splitlines():
+        if line.startswith("# "):
+            return line.replace("# ", "").strip()
+    return fallback.replace("_", " ").title()
+
+
+def section_chunks(path: Path) -> List[Dict]:
+    text = path.read_text(encoding="utf-8")
+    title = extract_title(text, path.stem)
+    sections = re.split(r"(?=^## )", text, flags=re.MULTILINE)
+
+    chunks = []
+
+    for section in sections:
+        section = section.strip()
+        if not section:
+            continue
+
+        first_line = section.splitlines()[0].strip()
+        if first_line.startswith("## "):
+            section_title = first_line.replace("## ", "").strip()
+        elif first_line.startswith("# "):
+            section_title = first_line.replace("# ", "").strip()
+        else:
+            section_title = "Overview"
+
+        chunks.append(
+            {
+                "doc_id": path.stem,
+                "title": title,
+                "section": section_title,
+                "source_path": str(path),
+                "snippet": section,
+            }
+        )
+
+    return chunks
 
 
 class PolicyRetriever:
     def __init__(self) -> None:
-        # Lazy imports keep the FastAPI app startup lightweight on free-tier hosts.
-        import chromadb
-        from sentence_transformers import SentenceTransformer
+        self.chunks: List[Dict] = []
 
-        self.model = SentenceTransformer(EMBEDDING_MODEL)
-        self.client = chromadb.PersistentClient(path=VECTOR_DB_PATH)
-        self.collection = self.client.get_collection(COLLECTION_NAME)
+        for path in sorted(POLICY_DIR.glob("*.md")):
+            self.chunks.extend(section_chunks(path))
 
     def search(self, query: str, top_k: int = 5) -> List[Dict]:
-        query_embedding = self.model.encode(
-            [query],
-            normalize_embeddings=True
-        ).tolist()[0]
+        query_terms = tokenize(query)
+        scored = []
 
-        results = self.collection.query(
-            query_embeddings=[query_embedding],
-            n_results=top_k,
-            include=["documents", "metadatas", "distances"],
-        )
+        for chunk in self.chunks:
+            searchable_text = " ".join(
+                [
+                    chunk["title"],
+                    chunk["section"],
+                    chunk["snippet"],
+                ]
+            )
+            chunk_terms = tokenize(searchable_text)
+
+            overlap = query_terms.intersection(chunk_terms)
+            score = len(overlap)
+
+            # Small boosts for exact phrase relevance.
+            lower_query = query.lower()
+            lower_text = searchable_text.lower()
+
+            if "home office" in lower_query and "home office" in lower_text:
+                score += 4
+            if "pto" in lower_query and "pto" in lower_text:
+                score += 4
+            if "remote" in lower_query and "remote" in lower_text:
+                score += 3
+            if "benefits" in lower_query and "benefits" in lower_text:
+                score += 3
+            if "expense" in lower_query and "expense" in lower_text:
+                score += 4
+            if "chair" in lower_query and "chair" in lower_text:
+                score += 4
+            if "password" in lower_query and "password" in lower_text:
+                score += 4
+            if "phishing" in lower_query and "phishing" in lower_text:
+                score += 4
+
+            if score > 0:
+                scored.append((score, chunk))
+
+        scored.sort(key=lambda item: item[0], reverse=True)
 
         matches = []
+        max_score = scored[0][0] if scored else 1
 
-        for i in range(len(results["ids"][0])):
-            metadata = results["metadatas"][0][i]
-            document_text = results["documents"][0][i]
-            distance = results["distances"][0][i]
-
+        for index, (score, chunk) in enumerate(scored[:top_k]):
             matches.append(
                 {
-                    "id": results["ids"][0][i],
-                    "score": round(1 - distance, 4),
-                    "doc_id": metadata.get("doc_id"),
-                    "title": metadata.get("title"),
-                    "section": metadata.get("section"),
-                    "source_path": metadata.get("source_path"),
-                    "snippet": document_text,
+                    "id": f"{chunk['doc_id']}-{index}",
+                    "score": round(score / max_score, 4),
+                    "doc_id": chunk["doc_id"],
+                    "title": chunk["title"],
+                    "section": chunk["section"],
+                    "source_path": chunk["source_path"],
+                    "snippet": chunk["snippet"],
                 }
             )
 
