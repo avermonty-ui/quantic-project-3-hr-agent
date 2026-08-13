@@ -1,6 +1,4 @@
 from typing import Dict, List
-import chromadb
-from sentence_transformers import SentenceTransformer
 
 
 VECTOR_DB_PATH = "rag/vector_store"
@@ -10,6 +8,10 @@ EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
 class PolicyRetriever:
     def __init__(self) -> None:
+        # Lazy imports keep the FastAPI app startup lightweight on free-tier hosts.
+        import chromadb
+        from sentence_transformers import SentenceTransformer
+
         self.model = SentenceTransformer(EMBEDDING_MODEL)
         self.client = chromadb.PersistentClient(path=VECTOR_DB_PATH)
         self.collection = self.client.get_collection(COLLECTION_NAME)
@@ -48,13 +50,25 @@ class PolicyRetriever:
         return matches
 
 
+_RETRIEVER = None
+
+
+def get_retriever() -> PolicyRetriever:
+    global _RETRIEVER
+
+    if _RETRIEVER is None:
+        _RETRIEVER = PolicyRetriever()
+
+    return _RETRIEVER
+
+
 def search_policy_documents(query: str, top_k: int = 5) -> List[Dict]:
-    retriever = PolicyRetriever()
+    retriever = get_retriever()
     return retriever.search(query=query, top_k=top_k)
 
 
 if __name__ == "__main__":
-    retriever = PolicyRetriever()
+    retriever = get_retriever()
 
     test_queries = [
         "Can an employee take three days of PTO next week?",
