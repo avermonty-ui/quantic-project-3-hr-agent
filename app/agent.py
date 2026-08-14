@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Optional
 
+from app.llm import generate_final_answer
 from hr_mcp.server import (
     lookup_employee_profile,
     check_pto_balance,
@@ -99,6 +100,7 @@ def extract_employee_identifier(message: str) -> Optional[str]:
 def is_pto_request(message: str) -> bool:
     return any(term in message for term in ["pto", "paid time off", "vacation", "sick leave"])
 
+
 def is_expense_request(message: str) -> bool:
     return any(
         term in message
@@ -115,8 +117,18 @@ def is_expense_request(message: str) -> bool:
         ]
     )
 
+
 def is_remote_work_request(message: str) -> bool:
-    return any(term in message for term in ["remote", "work from home", "work remotely", "another state", "international"])
+    return any(
+        term in message
+        for term in [
+            "remote",
+            "work from home",
+            "work remotely",
+            "another state",
+            "international",
+        ]
+    )
 
 
 def is_benefits_request(message: str) -> bool:
@@ -129,11 +141,17 @@ def handle_pto_request(
     employee_profile: Optional[Dict[str, Any]],
     tool_trace: List[Dict[str, Any]],
 ) -> Dict[str, Any]:
-    policy_results = search_policy_documents_tool("PTO request approval requirements balance extended absence", top_k=4)
+    policy_results = search_policy_documents_tool(
+        "PTO request approval requirements balance extended absence",
+        top_k=4,
+    )
     tool_trace.append(
         {
             "tool": "search_policy_documents_tool",
-            "arguments": {"query": "PTO request approval requirements balance extended absence", "top_k": 4},
+            "arguments": {
+                "query": "PTO request approval requirements balance extended absence",
+                "top_k": 4,
+            },
             "output": summarize_tool_output(policy_results),
         }
     )
@@ -178,7 +196,7 @@ def handle_pto_request(
 
     if not employee_id:
         answer = (
-            "I can explain the PTO policy, but I need an employee ID to check the employee's PTO balance. "
+            "I can explain the PTO policy, but I need an employee ID or name to check the employee's PTO balance. "
             "Policy guidance: employees should submit PTO requests at least five business days in advance when possible, "
             "and requests for three or more consecutive workdays require manager approval."
         )
@@ -198,8 +216,16 @@ def handle_pto_request(
             "I also drafted a mock manager email for review; it was not sent."
         )
 
+    final_answer = generate_final_answer(
+        user_message=message,
+        draft_answer=answer,
+        citations=citations,
+        snippets=snippets,
+        tool_trace=tool_trace,
+    )
+
     return {
-        "answer": answer,
+        "answer": final_answer,
         "citations": citations,
         "snippets": snippets,
         "tool_trace": tool_trace,
@@ -212,11 +238,17 @@ def handle_remote_work_request(
     employee_profile: Optional[Dict[str, Any]],
     tool_trace: List[Dict[str, Any]],
 ) -> Dict[str, Any]:
-    policy_results = search_policy_documents_tool("extended remote work out of state international approval security", top_k=5)
+    policy_results = search_policy_documents_tool(
+        "extended remote work out of state international approval security",
+        top_k=5,
+    )
     tool_trace.append(
         {
             "tool": "search_policy_documents_tool",
-            "arguments": {"query": "extended remote work out of state international approval security", "top_k": 5},
+            "arguments": {
+                "query": "extended remote work out of state international approval security",
+                "top_k": 5,
+            },
             "output": summarize_tool_output(policy_results),
         }
     )
@@ -245,7 +277,7 @@ def handle_remote_work_request(
 
     if not employee_id:
         answer = (
-            "I can explain the remote work policy, but I need an employee ID to check role eligibility. "
+            "I can explain the remote work policy, but I need an employee ID or name to check role eligibility. "
             "In general, remote work lasting more than ten consecutive business days requires manager and HR approval. "
             "Out-of-state or international remote work must be reviewed by HR before travel begins."
         )
@@ -263,12 +295,89 @@ def handle_remote_work_request(
             "insurance, and data privacy implications. I created a mock HR ticket for review."
         )
 
+    final_answer = generate_final_answer(
+        user_message=message,
+        draft_answer=answer,
+        citations=citations,
+        snippets=snippets,
+        tool_trace=tool_trace,
+    )
+
     return {
-        "answer": answer,
+        "answer": final_answer,
         "citations": citations,
         "snippets": snippets,
         "tool_trace": tool_trace,
     }
+
+
+def handle_benefits_request(
+    message: str,
+    employee_id: Optional[str],
+    employee_profile: Optional[Dict[str, Any]],
+    tool_trace: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    policy_results = search_policy_documents_tool(
+        "benefits eligibility full-time part-time enrollment medical dental vision",
+        top_k=4,
+    )
+    tool_trace.append(
+        {
+            "tool": "search_policy_documents_tool",
+            "arguments": {
+                "query": "benefits eligibility full-time part-time enrollment medical dental vision",
+                "top_k": 4,
+            },
+            "output": summarize_tool_output(policy_results),
+        }
+    )
+
+    benefits_result = None
+    if employee_id:
+        benefits_result = lookup_benefits_status(employee_id)
+        tool_trace.append(
+            {
+                "tool": "lookup_benefits_status",
+                "arguments": {"employee_id": employee_id},
+                "output": benefits_result,
+            }
+        )
+
+    citations, snippets = build_sources(policy_results)
+
+    if not employee_id:
+        answer = (
+            "I can explain the benefits policy, but I need an employee ID or name to check the mock benefits record. "
+            "In general, full-time employees are eligible for benefits, while part-time employees are not automatically eligible."
+        )
+    elif not benefits_result or not benefits_result.get("found"):
+        answer = f"I could not find a benefits record for employee {employee_id}."
+    else:
+        benefits = benefits_result["benefits"]
+        eligible = benefits["benefits_eligible"]
+        answer = (
+            f"Employee {employee_id} benefits eligibility is {eligible}. "
+            f"Medical plan: {benefits['medical_plan']}. Dental plan: {benefits['dental_plan']}. "
+            f"Vision plan: {benefits['vision_plan']}. "
+            "The policy states that full-time employees are generally eligible, while part-time employees, contractors, interns, "
+            "and temporary workers may not be eligible unless required by law or written agreement."
+        )
+
+    final_answer = generate_final_answer(
+        user_message=message,
+        draft_answer=answer,
+        citations=citations,
+        snippets=snippets,
+        tool_trace=tool_trace,
+    )
+
+    return {
+        "answer": final_answer,
+        "citations": citations,
+        "snippets": snippets,
+        "tool_trace": tool_trace,
+    }
+
 
 def handle_expense_request(
     message: str,
@@ -324,61 +433,16 @@ def handle_expense_request(
             "the employee is marked as remote eligible."
         )
 
-    return {
-        "answer": answer,
-        "citations": citations,
-        "snippets": snippets,
-        "tool_trace": tool_trace,
-    }
-
-def handle_benefits_request(
-    message: str,
-    employee_id: Optional[str],
-    employee_profile: Optional[Dict[str, Any]],
-    tool_trace: List[Dict[str, Any]],
-) -> Dict[str, Any]:
-    policy_results = search_policy_documents_tool("benefits eligibility full-time part-time enrollment medical dental vision", top_k=4)
-    tool_trace.append(
-        {
-            "tool": "search_policy_documents_tool",
-            "arguments": {"query": "benefits eligibility full-time part-time enrollment medical dental vision", "top_k": 4},
-            "output": summarize_tool_output(policy_results),
-        }
+    final_answer = generate_final_answer(
+        user_message=message,
+        draft_answer=answer,
+        citations=citations,
+        snippets=snippets,
+        tool_trace=tool_trace,
     )
 
-    benefits_result = None
-    if employee_id:
-        benefits_result = lookup_benefits_status(employee_id)
-        tool_trace.append(
-            {
-                "tool": "lookup_benefits_status",
-                "arguments": {"employee_id": employee_id},
-                "output": benefits_result,
-            }
-        )
-
-    citations, snippets = build_sources(policy_results)
-
-    if not employee_id:
-        answer = (
-            "I can explain the benefits policy, but I need an employee ID to check the mock benefits record. "
-            "In general, full-time employees are eligible for benefits, while part-time employees are not automatically eligible."
-        )
-    elif not benefits_result or not benefits_result.get("found"):
-        answer = f"I could not find a benefits record for employee {employee_id}."
-    else:
-        benefits = benefits_result["benefits"]
-        eligible = benefits["benefits_eligible"]
-        answer = (
-            f"Employee {employee_id} benefits eligibility is {eligible}. "
-            f"Medical plan: {benefits['medical_plan']}. Dental plan: {benefits['dental_plan']}. "
-            f"Vision plan: {benefits['vision_plan']}. "
-            "The policy states that full-time employees are generally eligible, while part-time employees, contractors, interns, "
-            "and temporary workers may not be eligible unless required by law or written agreement."
-        )
-
     return {
-        "answer": answer,
+        "answer": final_answer,
         "citations": citations,
         "snippets": snippets,
         "tool_trace": tool_trace,
@@ -407,8 +471,16 @@ def handle_policy_question(message: str, tool_trace: List[Dict[str, Any]]) -> Di
             f"{top['snippet'][:600]}"
         )
 
+    final_answer = generate_final_answer(
+        user_message=message,
+        draft_answer=answer,
+        citations=citations,
+        snippets=snippets,
+        tool_trace=tool_trace,
+    )
+
     return {
-        "answer": answer,
+        "answer": final_answer,
         "citations": citations,
         "snippets": snippets,
         "tool_trace": tool_trace,
